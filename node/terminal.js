@@ -40,8 +40,8 @@ const options = yargs
         type: "boolean",
         default: true
     })
-    .option("no-output", {
-        alias: "no-output",
+    .option("no-key-value", {
+        alias: "no-key-value",
         describe: "Equivalent to -o false",
         type: "boolean",
         default: false,
@@ -52,9 +52,9 @@ const options = yargs
  * Processes all of the argv options in turn, starting with the file. Goes by a preset list of commands.
  */
 const processArgs = async function () {
-    if (options["no-output"]) options.o = false;
+    if (options["no-key-value"]) options.o = false;
     if (!options.i && !options.f == "") {
-        await readFile();
+        readFile();
     } else{
         console.error("Piping commands to json-search is not supported. You can pipe from it, though! :)");
     }
