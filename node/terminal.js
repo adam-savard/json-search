@@ -1,9 +1,8 @@
 const yargs = require('yargs');
 const fs = require('fs');
-const json;
-const keyValue;
-
-
+var json = {};
+var keyValue;
+var debugMode = false;
 //declarartion of options to be used
 
 const options = yargs
@@ -12,7 +11,7 @@ const options = yargs
         alias: "file",
         describe: "The file to be used as input",
         type: "string",
-        default: ""
+        default: null
     })
     .option("k", {
         alias: "key",
@@ -25,13 +24,15 @@ const options = yargs
         alias: "get-size",
         describe: "Get the size of the key given",
         type: "boolean",
-        default: false
+        default: false,
+        requiresArg: false
     })
     .option("l", {
         alias: "get-length",
         describe: "Gets the length of the array, given the key's value is an array.",
         type: "boolean",
-        default: false
+        default: false,
+        requiresArg: false
     })
     .option("o", {
         alias: "output",
@@ -39,12 +40,54 @@ const options = yargs
         type: "boolean",
         default: true
     })
+    .option("no-output", {
+        alias: "no-output",
+        describe: "Equivalent to -o false",
+        type: "boolean",
+        default: false,
+        requiresArg: false
+    })
     .argv;
 /**
  * Processes all of the argv options in turn, starting with the file. Goes by a preset list of commands.
  */
-const processArgs = function () {
-    readFile();
+const processArgs = async function () {
+    if (options["no-output"]) options.o = false;
+    if (!options.i && !options.f == "") {
+        await readFile();
+    } else{
+        console.error("Piping commands to json-search is not supported. You can pipe from it, though! :)");
+    }
+}
+
+/**
+ * Reads the file given from the terminal (if any) and stores it in a const called json
+ */
+const readFile = async function () {
+    if (options.f == "") {
+        //use stdin
+        console.error(`You supplied a blank file. Did you mean -stdin for reading from standard input?`);
+    } else {
+        //read the file from disk
+        let asyncFileRead = async _ => {
+            fs.readFile(options.f, {
+                encoding: 'utf-8'
+            }, function (err, data) {
+                if (err) {
+                    console.error(`No such file: ${options.f}`);
+                } else {
+                    json = JSON.parse(data);
+                    processJson();
+                }
+            });
+        }
+
+        await asyncFileRead();
+    }
+
+}
+
+const processJson = function () {
     getKey();
     getSize();
     getLength();
@@ -52,32 +95,15 @@ const processArgs = function () {
 }
 
 /**
- * Reads the file given from the terminal (if any) and stores it in a const called json
- */
-const readFile = function () {
-
-    if (options.f == "") {
-        //use stdin
-        console.error(`Not implemented yet for stdin. Check back soon!`);
-    } else {
-        //read the file from disk
-        json = JSON.parse(fs.open(options.f, "r", function (error, fd) {
-            if (error) {
-                console.error(`No such file: ${options.f}`);
-            }
-        }));
-    }
-}
-
-/**
  * Gets the key from the JSON, and stores it. The key is logged out by default
  */
 const getKey = function () {
+    debugLog(options.k);
     if (options.k == "") {
         //if there's no key provided, just log the whole thing back out
         keyValue = json;
     } else {
-        keyValue = json[key];
+        keyValue = json[options.k];
     }
 }
 
@@ -94,21 +120,37 @@ const getSize = function () {
 /**
  * Gets the length of the key, provided it is an array
  */
-const getLength = function(){
-    if(Array.isArray(keyValue) && options.l){
-        console.log(`Length: ${keyValue.length}`);
-    }
-    else{
-        console.log(`Length: Cannot get length of non-array key.`);
+const getLength = function () {
+    if (options.l) {
+        if (Array.isArray(keyValue)) {
+            console.log(`Length: ${keyValue.length}`);
+        } else {
+            console.log(`Length: Cannot get length of non-array key.`);
+        }
     }
 }
 
 /**
  * Consoles the key value that is grabbed from the original JSON
  */
-const getOutput = function(){
-    if(options.o){
+const getOutput = function () {
+    if (options.o && keyValue) {
         console.log(keyValue);
+    } else if (options.o) {
+        console.log(json);
+    }
+    else{
+        console.log(`Key: "${options.k}"`);
+    }
+}
+
+/**
+ * For debugging
+ * @param {string} message The message to console out. Goes to stderr
+ */
+const debugLog = function (message) {
+    if (debugMode) {
+        console.error(message);
     }
 }
 
