@@ -1,8 +1,8 @@
 {
-  "name": "json-search",
-  "version": "1.0.0",
+  "name": "@mornward/json-search",
+  "version": "1.0.3",
   "description": "A terminal application to quickly search through existing JSON files",
-  "main": "index.js",
+  "main": "json-search.js",
   "scripts": {
     "test": "node . ./test/min.json "
   },
@@ -24,5 +24,8 @@
   "dependencies": {
     "pipe-args": "^1.3.0",
     "yargs": "^15.3.0"
+  },
+  "bin": {
+    "json-search": "./json-serach.js"
   }
 }
